@@ -1,0 +1,28 @@
+[
+  {
+    "pilot_team": "pilot-alpha",
+    "stage": 1,
+    "active_users": 5,
+    "requests_processed": 0,
+    "routing_accuracy": 0.0,
+    "avg_scoring_confidence": 0.0,
+    "stakeholder_satisfaction": 0.0,
+    "open_feedback_items": 0,
+    "prompt_version": "v1.0",
+    "blockers": "[]",
+    "status": "active"
+  },
+  {
+    "pilot_team": "pilot-beta",
+    "stage": 1,
+    "active_users": 3,
+    "requests_processed": 0,
+    "routing_accuracy": 0.0,
+    "avg_scoring_confidence": 0.0,
+    "stakeholder_satisfaction": 0.0,
+    "open_feedback_items": 0,
+    "prompt_version": "v1.0",
+    "blockers": "[]",
+    "status": "active"
+  }
+]

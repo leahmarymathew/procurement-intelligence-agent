@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir \"C:\\\\Users\\\\Leah\\\\Documents\\\\git\\\\procurement-intelligent-agent\")",
+      "Bash(python -c ' *)"
+    ]
+  }
+}
