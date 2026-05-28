@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from ..database import get_db
+from sqlalchemy import func
 from ..models import PilotMetrics, StakeholderFeedback
 from ..schemas import PilotCreate, PilotSummaryResponse, FeedbackCreate
 
@@ -57,7 +58,7 @@ async def advance_pilot_stage(pilot_team: str, db: AsyncSession = Depends(get_db
 
 @router.post("/{pilot_team}/feedback", status_code=201)
 async def submit_feedback(pilot_team: str, body: FeedbackCreate, db: AsyncSession = Depends(get_db)):
-    fb = StakeholderFeedback(pilot_team=pilot_team, **body.model_dump())
+    fb = StakeholderFeedback(pilot_team=pilot_team, **body.model_dump(exclude={"pilot_team"}))
     db.add(fb)
 
     # Update open_feedback_items count on pilot
@@ -69,6 +70,18 @@ async def submit_feedback(pilot_team: str, body: FeedbackCreate, db: AsyncSessio
     pilot = result.scalar_one_or_none()
     if pilot:
         pilot.open_feedback_items += 1
+
+        # Recompute average satisfaction from all ratings for this pilot
+        avg_result = await db.execute(
+            select(func.avg(StakeholderFeedback.rating)).where(
+                StakeholderFeedback.pilot_team == pilot_team,
+                StakeholderFeedback.rating.isnot(None),
+            )
+        )
+        avg_rating = avg_result.scalar_one_or_none()
+        if avg_rating is not None:
+            pilot.stakeholder_satisfaction = round(float(avg_rating), 2)
+
         pilot.updated_at = datetime.utcnow().isoformat()
 
     await db.commit()

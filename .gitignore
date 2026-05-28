@@ -13,6 +13,7 @@ build/
 *.db
 *.db-journal
 *.db-wal
+*.db-shm
 
 # ChromaDB persisted data
 data/chroma/
@@ -23,12 +24,28 @@ data/chroma/
 # Node
 frontend/node_modules/
 frontend/dist/
+frontend/.vite/
+
+# Runtime logs
+*.log
+backend_out.log
+backend_err.log
+frontend.log
+
+# Sentence-transformers model cache
+.cache/
+sentence_transformers/
+
+# Benchmark output
+benchmark_results*.json
 
 # OS
 .DS_Store
 Thumbs.db
+desktop.ini
 
 # IDE
 .vscode/
 .idea/
 *.swp
+*.swo

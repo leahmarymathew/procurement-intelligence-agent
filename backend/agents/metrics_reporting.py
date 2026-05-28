@@ -9,7 +9,7 @@ from sqlalchemy.exc import IntegrityError
 from .base import BaseAgent
 from ..database import AsyncSessionLocal
 from ..models import (
-    MetricsAggregate, PilotMetrics, SupplierScore, ApprovalDecision,
+    MetricsAggregate, PilotMetrics, PurchaseRequest, SupplierScore, ApprovalDecision,
     AuditLog, ProcessBacklog, StakeholderFeedback,
 )
 from ..schemas import AuditLogEntry
@@ -91,6 +91,25 @@ class MetricsReportingAgent(BaseAgent):
                 pm = pm_result.scalar_one_or_none()
                 if pm and event == "request_processed":
                     pm.requests_processed = (pm.requests_processed or 0) + 1
+                    pm.updated_at = datetime.utcnow().isoformat()
+
+                if pm and event == "approval_decided":
+                    pr_result = await db.execute(
+                        select(PurchaseRequest.request_id).where(
+                            PurchaseRequest.pilot_team == pilot_team
+                        )
+                    )
+                    request_ids = [r[0] for r in pr_result.all()]
+                    if request_ids:
+                        ad_result = await db.execute(
+                            select(ApprovalDecision).where(
+                                ApprovalDecision.request_id.in_(request_ids)
+                            )
+                        )
+                        decisions = ad_result.scalars().all()
+                        if decisions:
+                            routed = sum(1 for d in decisions if not d.is_policy_gap)
+                            pm.routing_accuracy = round(routed / len(decisions), 4)
                     pm.updated_at = datetime.utcnow().isoformat()
 
             agg.updated_at = datetime.utcnow().isoformat()

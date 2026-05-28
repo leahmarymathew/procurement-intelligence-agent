@@ -59,10 +59,17 @@ def _load_documents() -> list[dict]:
     for fpath in sorted(kb_dir.glob("*.md")):
         text = fpath.read_text(encoding="utf-8")
         paragraphs = [p.strip() for p in re.split(r"\n{2,}", text) if p.strip()]
+        current_heading = ""
         for idx, para in enumerate(paragraphs):
+            # Track the nearest ## heading so each chunk carries its section context
+            if para.startswith("#"):
+                current_heading = para.lstrip("#").strip()
+                continue
+            # Prepend the section heading so the LLM knows which entity a chunk belongs to
+            content = f"[{current_heading}]\n{para}" if current_heading else para
             docs.append({
                 "chunk_id": _chunk_id(fpath.name, idx),
-                "content": para,
+                "content": content,
                 "source": fpath.name,
                 "paragraph_index": idx,
             })
