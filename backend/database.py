@@ -1,8 +1,5 @@
-import os
-from pathlib import Path
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from sqlalchemy.orm import DeclarativeBase
-from sqlalchemy import text
 from .config import settings
 
 
@@ -20,12 +17,22 @@ async def get_db() -> AsyncSession:
 
 
 async def init_db() -> None:
-    """Run migration 001 (and any future migrations) on startup."""
-    migration_path = Path(__file__).parent.parent / "migrations" / "001_initial_schema.sql"
-    sql = migration_path.read_text()
+    """Create all tables (database-agnostic) and stamp the migration log."""
+    # Import models so their metadata is registered before create_all
+    from . import models  # noqa: F401
 
     async with engine.begin() as conn:
-        # SQLite doesn't support multi-statement execute natively via text(); split on ';'
-        statements = [s.strip() for s in sql.split(";") if s.strip()]
-        for stmt in statements:
-            await conn.execute(text(stmt))
+        await conn.run_sync(Base.metadata.create_all)
+
+    # Stamp migration log (idempotent)
+    from sqlalchemy import select
+    from .models import MigrationLog
+    async with AsyncSessionLocal() as db:
+        result = await db.execute(select(MigrationLog).where(MigrationLog.version == "001"))
+        if not result.scalar_one_or_none():
+            db.add(MigrationLog(
+                version="001",
+                description="Initial schema: all core tables",
+                executed_by="system",
+            ))
+            await db.commit()

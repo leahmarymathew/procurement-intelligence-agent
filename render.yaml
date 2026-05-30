@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: procurement-agent-api
+    env: docker
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: GROQ_API_KEY
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: procurement-db
+          property: connectionString
+      - key: CHROMA_PERSIST_DIR
+        value: /data/chroma
+      - key: KNOWLEDGE_BASE_DIR
+        value: /app/data/knowledge_base
+      - key: SEED_DIR
+        value: /app/data/seed
+      - key: CORS_ORIGINS
+        value: '["https://procurement-dashboard.vercel.app"]'
+    disk:
+      name: chroma-storage
+      mountPath: /data/chroma
+      sizeGB: 1
+
+databases:
+  - name: procurement-db
+    databaseName: procurement
+    plan: free
