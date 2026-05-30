@@ -12,17 +12,13 @@ services:
           name: procurement-db
           property: connectionString
       - key: CHROMA_PERSIST_DIR
-        value: /data/chroma
+        value: /tmp/chroma
       - key: KNOWLEDGE_BASE_DIR
         value: /app/data/knowledge_base
       - key: SEED_DIR
         value: /app/data/seed
       - key: CORS_ORIGINS
         value: '["https://procurement-dashboard.vercel.app"]'
-    disk:
-      name: chroma-storage
-      mountPath: /data/chroma
-      sizeGB: 1
 
 databases:
   - name: procurement-db
