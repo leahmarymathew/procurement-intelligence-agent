@@ -16,5 +16,5 @@ services:
       - key: SEED_DIR
         value: /app/data/seed
       - key: CORS_ORIGINS
-        value: '["https://procurement-dashboard.vercel.app"]'
+        value: '["https://procurement-intelligence-agent.vercel.app"]'
 
