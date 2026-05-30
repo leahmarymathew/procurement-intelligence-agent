@@ -8,9 +8,7 @@ services:
       - key: GROQ_API_KEY
         sync: false
       - key: DATABASE_URL
-        fromDatabase:
-          name: procurement-db
-          property: connectionString
+        sync: false
       - key: CHROMA_PERSIST_DIR
         value: /tmp/chroma
       - key: KNOWLEDGE_BASE_DIR
@@ -20,7 +18,3 @@ services:
       - key: CORS_ORIGINS
         value: '["https://procurement-dashboard.vercel.app"]'
 
-databases:
-  - name: procurement-db
-    databaseName: procurement
-    plan: free
