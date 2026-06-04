@@ -92,15 +92,19 @@ async def get_request_status(request_id: str, db: AsyncSession = Depends(get_db)
     }
 
 
-@router.post("/supplier/score")
-async def score_supplier(req: SupplierScoreRequest, db: AsyncSession = Depends(get_db)):
-    from ..agents.orchestrator import run_orchestrator
+@router.post("/supplier/score", status_code=202)
+async def score_supplier(
+    req: SupplierScoreRequest,
+    background_tasks: BackgroundTasks,
+    db: AsyncSession = Depends(get_db),
+):
     orch_req = OrchestratorRequest(
         request_type="supplier_score",
         payload=req.model_dump(),
         pilot_team=req.pilot_team,
     )
-    return await run_orchestrator(orch_req)
+    background_tasks.add_task(_run_orch_in_new_session, orch_req)
+    return {"status": "accepted", "supplier_name": req.supplier_name, "category": req.category}
 
 
 @router.post("/process-discovery")
