@@ -2,7 +2,26 @@
   "permissions": {
     "allow": [
       "Bash(dir \"C:\\\\Users\\\\Leah\\\\Documents\\\\git\\\\procurement-intelligent-agent\")",
-      "Bash(python -c ' *)"
+      "Bash(python -c ' *)",
+      "PowerShell(pip install *)",
+      "PowerShell(if \\(-not \\(Test-Path \".env\"\\)\\) { Copy-Item \".env.example\" \".env\"; Write-Host \".env created from template\" } else { Write-Host \".env already exists\" })",
+      "PowerShell(.\\\\start.ps1)",
+      "PowerShell(Start-Sleep -Seconds 8; $null)",
+      "PowerShell(try { $response = Invoke-WebRequest -Uri \"http://localhost:8000/health\" -TimeoutSec 5; Write-Host \"✓ Backend is running\"; Write-Host \"Response: $\\($response.Content\\)\" } catch { Write-Host \"✗ Backend not responding yet: $_\" })",
+      "PowerShell(curl *)",
+      "Bash(bash test-procurement.sh)",
+      "Bash(cat)",
+      "Bash(bash /tmp/score-suppliers.sh)",
+      "Bash(bash /tmp/check-status.sh)",
+      "PowerShell(Get-Process *)",
+      "Bash(bash /c/Users/Leah/Documents/git/procurement-intelligent-agent/test-procurement.sh)",
+      "Bash(curl -s http://localhost:8000/metrics)",
+      "Bash(python3 -m json.tool)",
+      "Bash(curl -s \"http://localhost:8000/audit-log?limit=10\")",
+      "Bash(bash /tmp/check-requests.sh)",
+      "Bash(curl -s http://localhost:8000/pilot)",
+      "Bash(git add *)",
+      "Bash(git commit -m 'Fix metrics aggregation race condition and None type handling *)"
     ]
   }
 }

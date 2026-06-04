@@ -4,6 +4,7 @@ from datetime import date, datetime
 from typing import Optional
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 
 from .base import BaseAgent
 from ..database import AsyncSessionLocal
@@ -38,18 +39,26 @@ class MetricsReportingAgent(BaseAgent):
             if not agg:
                 agg = MetricsAggregate(metric_date=today)
                 db.add(agg)
+                try:
+                    await db.flush()
+                except IntegrityError:
+                    await db.rollback()
+                    result = await db.execute(
+                        select(MetricsAggregate).where(MetricsAggregate.metric_date == today)
+                    )
+                    agg = result.scalar_one_or_none()
 
             if event == "request_processed":
-                agg.requests_processed += 1
+                agg.requests_processed = (agg.requests_processed or 0) + 1
             elif event == "supplier_scored":
-                agg.supplier_scores_generated += 1
+                agg.supplier_scores_generated = (agg.supplier_scores_generated or 0) + 1
             elif event == "approval_decided":
-                agg.approval_decisions_made += 1
+                agg.approval_decisions_made = (agg.approval_decisions_made or 0) + 1
             elif event == "finding_added":
-                agg.process_findings_count += 1
+                agg.process_findings_count = (agg.process_findings_count or 0) + 1
 
             if is_escalation:
-                total = agg.approval_decisions_made or 1
+                total = (agg.approval_decisions_made or 0) or 1
                 # Recalculate escalation rate
                 esc_result = await db.execute(
                     select(ApprovalDecision).where(ApprovalDecision.escalation_condition.isnot(None))
@@ -58,13 +67,13 @@ class MetricsReportingAgent(BaseAgent):
                 agg.escalation_rate = round(escalations / total, 4)
 
             if is_policy_gap:
-                agg.policy_gap_count += 1
+                agg.policy_gap_count = (agg.policy_gap_count or 0) + 1
 
             if confidence is not None:
                 # Rolling average (simplified)
-                total_scores = agg.supplier_scores_generated or 1
+                total_scores = (agg.supplier_scores_generated or 0) or 1
                 agg.avg_confidence = round(
-                    (agg.avg_confidence * (total_scores - 1) + confidence) / total_scores, 4
+                    ((agg.avg_confidence or 0) * (total_scores - 1) + confidence) / total_scores, 4
                 )
 
             if agent_type:
@@ -75,13 +84,13 @@ class MetricsReportingAgent(BaseAgent):
             if pilot_team:
                 pm_result = await db.execute(
                     select(PilotMetrics).where(
-                        PilotMetrics.pilot_team == pilot_team,
-                        PilotMetrics.status == "active",
+                        (PilotMetrics.pilot_team == pilot_team) &
+                        (PilotMetrics.status == "active")
                     ).order_by(PilotMetrics.stage.desc())
                 )
                 pm = pm_result.scalar_one_or_none()
                 if pm and event == "request_processed":
-                    pm.requests_processed += 1
+                    pm.requests_processed = (pm.requests_processed or 0) + 1
                     pm.updated_at = datetime.utcnow().isoformat()
 
             agg.updated_at = datetime.utcnow().isoformat()
