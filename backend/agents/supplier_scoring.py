@@ -148,7 +148,7 @@ class SupplierScoringAgent(BaseAgent):
 
 
 def _fallback_scores(error_reason: str, chunks: list) -> dict:
-    """When OpenAI is unavailable, return conservative middle scores with attribution."""
+    """When Groq is unavailable, return conservative middle scores with attribution."""
     print(f"[supplier-scoring] LLM unavailable ({error_reason}), using fallback scores")
     source = chunks[0]["chunk_id"] if chunks else "insufficient-data"
     return {

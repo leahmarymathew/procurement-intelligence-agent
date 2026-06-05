@@ -6,8 +6,8 @@ import json
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
-    openai_api_key: str = ""
-    openai_model: str = "gpt-4o"
+    groq_api_key: str = ""
+    groq_model: str = "llama-3.3-70b-versatile"
 
     slack_bot_token: str = ""
     slack_signing_secret: str = ""

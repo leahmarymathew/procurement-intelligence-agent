@@ -5,9 +5,7 @@ invoking the LLM — this is enforced in the base agent.
 from __future__ import annotations
 from typing import List, Dict
 
-from langchain_openai import OpenAIEmbeddings
 from .knowledge_base import _get_collection
-from ..config import settings
 
 
 async def retrieve_supplier_chunks(
@@ -23,14 +21,9 @@ async def retrieve_supplier_chunks(
     if collection.count() == 0:
         return []
 
-    embeddings_fn = OpenAIEmbeddings(
-        api_key=settings.openai_api_key,
-        model="text-embedding-3-small",
-    )
-    query_vector = embeddings_fn.embed_query(query)
-
+    # collection embeds the query automatically using SentenceTransformer
     results = collection.query(
-        query_embeddings=[query_vector],
+        query_texts=[query],
         n_results=min(top_k, collection.count()),
         include=["documents", "metadatas", "distances"],
     )

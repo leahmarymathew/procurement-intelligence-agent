@@ -12,7 +12,7 @@ from typing import Optional
 
 import chromadb
 from chromadb.config import Settings as ChromaSettings
-from langchain_openai import OpenAIEmbeddings
+from chromadb.utils.embedding_functions import SentenceTransformerEmbeddingFunction
 
 from ..config import settings
 
@@ -33,12 +33,16 @@ def _get_client() -> chromadb.ClientAPI:
     return _client
 
 
+_embed_fn = SentenceTransformerEmbeddingFunction(model_name="all-MiniLM-L6-v2")
+
+
 def _get_collection() -> chromadb.Collection:
     global _collection
     if _collection is None:
         client = _get_client()
         _collection = client.get_or_create_collection(
             name="supplier_knowledge",
+            embedding_function=_embed_fn,
             metadata={"hnsw:space": "cosine"},
         )
     return _collection
@@ -76,18 +80,13 @@ async def build_knowledge_base(force_rebuild: bool = False) -> int:
     if not docs:
         return 0
 
-    embeddings_fn = OpenAIEmbeddings(
-        api_key=settings.openai_api_key,
-        model="text-embedding-3-small",
-    )
-
     batch_size = 50
     for i in range(0, len(docs), batch_size):
         batch = docs[i : i + batch_size]
         texts = [d["content"] for d in batch]
         ids = [d["chunk_id"] for d in batch]
         metadatas = [{"source": d["source"], "paragraph_index": d["paragraph_index"]} for d in batch]
-        vectors = embeddings_fn.embed_documents(texts)
-        collection.upsert(ids=ids, embeddings=vectors, documents=texts, metadatas=metadatas)
+        # collection already has _embed_fn attached; just pass documents
+        collection.upsert(ids=ids, documents=texts, metadatas=metadatas)
 
     return len(docs)

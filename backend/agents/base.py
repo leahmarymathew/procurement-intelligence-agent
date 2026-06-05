@@ -57,18 +57,24 @@ class BaseAgent:
         return datetime.utcnow().isoformat()
 
     async def _llm_call(self, system_prompt: str, user_message: str) -> dict:
-        """Shared OpenAI JSON-mode call. Returns parsed dict."""
-        if not settings.openai_api_key:
-            raise RuntimeError("OPENAI_API_KEY not configured")
-        from openai import AsyncOpenAI
-        client = AsyncOpenAI(api_key=settings.openai_api_key)
+        """Groq LLM call. Returns parsed dict."""
+        if not settings.groq_api_key:
+            raise RuntimeError("GROQ_API_KEY not configured")
+        from groq import AsyncGroq
+        client = AsyncGroq(api_key=settings.groq_api_key)
         response = await client.chat.completions.create(
-            model=settings.openai_model,
+            model=settings.groq_model,
             messages=[
-                {"role": "system", "content": system_prompt},
+                {"role": "system", "content": system_prompt + "\n\nRespond ONLY with valid JSON."},
                 {"role": "user", "content": user_message},
             ],
-            response_format={"type": "json_object"},
             temperature=0.1,
+            max_tokens=2048,
         )
-        return json.loads(response.choices[0].message.content)
+        raw = response.choices[0].message.content.strip()
+        # strip markdown code fences if present
+        if raw.startswith("```"):
+            raw = raw.split("```")[1]
+            if raw.startswith("json"):
+                raw = raw[4:]
+        return json.loads(raw.strip())

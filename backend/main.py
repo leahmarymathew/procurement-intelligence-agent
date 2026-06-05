@@ -11,7 +11,7 @@ from .routers import audit, metrics, procurement, pilot
 async def lifespan(app: FastAPI):
     await init_db()
     await _seed_if_empty()
-    if settings.openai_api_key:
+    if settings.groq_api_key:
         try:
             from .rag.knowledge_base import build_knowledge_base
             count = await build_knowledge_base()
